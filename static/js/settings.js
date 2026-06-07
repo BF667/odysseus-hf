@@ -2199,6 +2199,8 @@ function initAll() {
   initUnifiedIntegrations();
   // HF Cloud Storage bucket management
   if (window.initBucketSettings) window.initBucketSettings();
+  // HF Secrets & Environment management
+  if (window.initHfSecrets) window.initHfSecrets();
   if (window.initGithubRepos) window.initGithubRepos();
 }
 

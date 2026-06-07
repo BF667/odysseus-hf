@@ -734,6 +734,14 @@ from routes.bucket_routes import setup_bucket_routes
 app.include_router(setup_bucket_routes())
 logger.info("HF Bucket routes initialized")
 
+# HF Spaces Secrets & Environment management
+from src.hf_secrets import get_hf_secrets_manager
+hf_secrets_manager = get_hf_secrets_manager()
+app.state.hf_secrets_manager = hf_secrets_manager
+from routes.secrets_routes import setup_secrets_routes
+app.include_router(setup_secrets_routes())
+logger.info("HF Secrets routes initialized")
+
 # GitHub OAuth & Repository Management
 from src.github_oauth import get_github_oauth
 github_oauth = get_github_oauth()

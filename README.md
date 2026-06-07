@@ -22,6 +22,8 @@ A self-hosted AI workspace — meant to be the self-hosted version of the UI exp
 | **Bucket REST API** | Full CRUD API at `/api/buckets/` for programmatic bucket and file management |
 | **Auto-Bucket Bootstrap** | Set `ODYSSEUS_AUTO_BUCKET=1` and a private bucket is created for you on first boot |
 | **Entrypoint Bootstrap** | `docker/entrypoint-spaces.sh` handles token validation, bucket setup, ChromaDB startup, and data sync |
+| **HF Spaces Secrets** | Manage Space secrets from **Settings → Secrets** — no `.env` needed. Uses [HF's built-in secrets](https://huggingface.co/docs/hub/spaces-overview#managing-secrets) for persistence |
+| **Secrets REST API** | Full API at `/api/secrets/` for viewing status, adding/deleting Space secrets, and managing local env vars |
 | **GitHub OAuth** | Login with GitHub via OAuth2 Authorization Code flow — manage repos from the UI |
 | **GitHub Repo Management** | Create, delete, fork, and update repositories; push files; list branches and contents |
 | **GitHub UI** | Settings → GitHub tab — connect account, browse repos, publish project, one-click delete |
@@ -35,8 +37,11 @@ The following files were added or modified in this fork on top of the [upstream 
 | `Dockerfile.spaces` | Added | Multi-stage Docker build for HF Spaces (auto-clones from GitHub) |
 | `docker/entrypoint-spaces.sh` | Added | Bootstrap script: token validation, bucket setup, ChromaDB, data sync |
 | `src/hf_bucket_storage.py` | Added | `HfBucketStorage` class — Python interface for HF Bucket CRUD and file ops |
+| `src/hf_secrets.py` | Added | `HfSecretsManager` class — HF Spaces secret management via `huggingface_hub` API |
 | `routes/bucket_routes.py` | Added | FastAPI router at `/api/buckets/` — 12 endpoints for bucket management |
+| `routes/secrets_routes.py` | Added | FastAPI router at `/api/secrets/` — 7 endpoints for secret status and Space secret CRUD |
 | `static/js/hfBuckets.js` | Added | Front-end UI for bucket creation, selection, file management |
+| `static/js/hfSecrets.js` | Added | Front-end UI for secrets status, Space secret management, and local env vars |
 | `src/github_oauth.py` | Added | `GitHubOAuth` class — OAuth2 flow, repo CRUD, file push/pull via GitHub API |
 | `routes/github_routes.py` | Added | FastAPI router at `/api/github/` — 16 endpoints for OAuth and repo management |
 | `static/js/githubRepos.js` | Added | Front-end UI for GitHub auth, repo listing, creation, deletion, publishing |
@@ -58,6 +63,7 @@ The following files were added or modified in this fork on top of the [upstream 
 | **Notes & Tasks** | Quick notes with reminders, a todo list, and scheduled tasks | Note pings, checklist, cron-style tasks, ntfy/browser/email channels |
 | **Calendar** | Local-first calendar with CalDAV sync | CalDAV pull, .ics import/export, per-calendar colors, agent-aware |
 | **HF Buckets** | Cloud storage with HF Storage Buckets — persistent across restarts | huggingface_hub, Xet, S3-compatible, auto-bucket bootstrap |
+| **Secrets** | Manage API keys and config as Space secrets — no `.env` needed in HF Spaces | huggingface_hub, Space API, env var introspection |
 | **GitHub** | OAuth login + repo management — create, publish, delete repos from the UI | GitHub OAuth2, REST API, repo CRUD, file push/pull |
 | **Mobile** | Looks and runs great on your phone, not just desktop | Responsive, installable (PWA), touch gestures |
 | **Extras** | More to explore — happy if you give it a go | Image editor, theme editor, file uploads (vision + PDF), web search, presets, sessions, 2FA |
@@ -333,8 +339,11 @@ In your Space's **Settings** page, add the following:
 | **Variable** | `ODYSSEUS_AUTO_BUCKET` | `1` | Recommended | Auto-creates a private bucket on first boot |
 | **Variable** | `ODYSSEUS_HF_BUCKET` | `username/odysseus-data` | Optional | Use a specific existing bucket instead of auto-create |
 | **Variable** | `ODYSSEUS_BUCKET_REGION` | `us` | Optional | Storage region for auto-created buckets |
+| **Secret** | `GITHUB_CLIENT_ID` | Your GitHub OAuth App client ID | Recommended | Enables GitHub integration (Settings → GitHub) |
+| **Secret** | `GITHUB_CLIENT_SECRET` | Your GitHub OAuth App client secret | Recommended | Required alongside GITHUB_CLIENT_ID |
+| **Variable** | `OAUTH_REDIRECT_BASE_URL` | `https://{user}-{space}.hf.space` | Optional | Public URL for OAuth callbacks (auto-detected if not set) |
 
-> **Tip:** Set `ODYSSEUS_AUTO_BUCKET=1` for the easiest experience — it creates `username/odysseus-data` automatically and you never need to think about bucket configuration.
+> **Tip:** Set `ODYSSEUS_AUTO_BUCKET=1` for the easiest experience — it creates `username/odysseus-data` automatically and you never need to think about bucket configuration. You can also manage all secrets from the Odysseus **Settings → Secrets** tab after deployment.
 
 #### Step 3 — Push the Dockerfile (that's the only file you need)
 
@@ -609,13 +618,16 @@ app.py                   # FastAPI entry point
 core/      auth, database, middleware, constants
 src/       llm_core, agent_loop, agent_tools, chat_processor, search/
            hf_bucket_storage.py  — HF Bucket cloud storage backend
+           hf_secrets.py         — HF Spaces secret management
            github_oauth.py       — GitHub OAuth2 + repo management
 routes/    chat, session, document, memory, model … endpoints
            bucket_routes.py      — HF Bucket management API
+           secrets_routes.py     — HF Spaces secrets API
            github_routes.py      — GitHub OAuth & repo management API
 services/  docs, memory, search, hwfit (Cookbook) …
 static/    index.html + app.js + style.css + js/ (modular front-end)
            js/hfBuckets.js       — Bucket UI (create, select, manage)
+           js/hfSecrets.js       — Secrets UI (status, add, delete)
            js/githubRepos.js     — GitHub UI (auth, repos, publish)
 docker/    entrypoint-spaces.sh  — HF Spaces bootstrap script
 Dockerfile.spaces               — HF Spaces-optimized Docker image
@@ -707,6 +719,75 @@ The default OAuth scope is `repo,user,read:org` which grants:
 | `delete_repo` | Delete repositories (must be added to scope manually) |
 
 > **Note:** To delete repositories via the API, you must add the `delete_repo` scope to your OAuth App's authorization URL. Edit the `scope` parameter in `src/github_oauth.py` to include it.
+
+## HF Spaces Secrets Management
+
+In HF Spaces, the container filesystem is **ephemeral** — `.env` files are wiped on every rebuild. Instead, HF Spaces provides a built-in [Secrets mechanism](https://huggingface.co/docs/hub/spaces-overview#managing-secrets) that injects environment variables at runtime. Odysseus now has a dedicated **Settings → Secrets** tab that lets you manage these secrets without ever touching `.env` files.
+
+### How it works
+
+| Method | Where | Persistent? | Triggers Restart? |
+|--------|-------|-------------|-------------------|
+| **Space Settings UI** | huggingface.co/spaces/{user}/{space}/settings | Yes | Yes |
+| **Odysseus Secrets tab** | Settings → Secrets | Yes | Yes (via HF API) |
+| **`.env` file** | Local disk / container | No (ephemeral in HF Spaces) | No |
+| **Local env set** | Odysseus Secrets → Set (local) | No (process-only) | No |
+
+### Secrets & Environment Variables Status
+
+The Secrets tab shows the status of all known environment variables, organized by category:
+
+| Category | Meaning |
+|----------|---------|
+| **Required** | Must be set for core functionality (e.g. `HF_TOKEN`) |
+| **Recommended** | Should be set for important features (e.g. `GITHUB_CLIENT_ID`) |
+| **Optional** | Nice-to-have for specific providers (e.g. `BRAVE_API_KEY`) |
+
+Each secret shows whether it's currently set, a masked preview of the value (for secrets), and a "Set" button to configure it.
+
+### Managing Space Secrets from the UI
+
+When running in HF Spaces, the Secrets tab can:
+
+| Action | Description |
+|--------|-------------|
+| **View status** | See all secrets/variables and which are set or missing |
+| **Add a secret** | Set a new secret on the Space via the HF API (triggers restart) |
+| **Delete a secret** | Remove a secret from the Space (triggers restart) |
+| **List Space secrets** | View all secrets currently configured on the Space (names only, never values) |
+| **Set locally** | Set an env var in the current process only (non-persistent, no restart) |
+
+> **Important:** Adding or deleting a Space secret triggers a **Space restart**. The new value will be available after the restart completes.
+
+### Secrets REST API
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/secrets/status` | GET | Status of all known secrets (works everywhere) |
+| `/api/secrets/space` | GET | Space info and secret management availability |
+| `/api/secrets/space/list` | GET | List Space secrets (names only, HF Spaces only) |
+| `/api/secrets/space/add` | POST | Add/update a Space secret (triggers restart) |
+| `/api/secrets/space/delete` | POST | Delete a Space secret (triggers restart) |
+| `/api/secrets/local/set` | POST | Set an env var in the current process (non-persistent) |
+| `/api/secrets/local/unset` | POST | Remove an env var from the current process |
+
+### Quick Setup for HF Spaces
+
+After deploying to HF Spaces, set these secrets to get the most out of your instance:
+
+```bash
+# Required — HF API access
+hf secrets set HF_TOKEN hf_xxxxxxxxxxxxxxxx
+
+# Recommended — GitHub integration
+hf secrets set GITHUB_CLIENT_ID your_client_id
+hf secrets set GITHUB_CLIENT_SECRET your_client_secret
+
+# Optional — OAuth redirect URL (auto-detected if not set)
+hf secrets set OAUTH_REDIRECT_BASE_URL https://youruser-yourspace.hf.space
+```
+
+Or use the Odysseus **Settings → Secrets** tab to add them from the UI.
 
 ## Troubleshooting & Advanced Setup
 

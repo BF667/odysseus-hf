@@ -1391,7 +1391,12 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
             <span>Cloud Storage</span>
           </button>
-          <!-- Section 6: GitHub -->
+          <!-- Section 6: Secrets & Environment -->
+          <button class="settings-nav-item" data-settings-tab="secrets">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            <span>Secrets</span>
+          </button>
+          <!-- Section 7: GitHub -->
           <button class="settings-nav-item" data-settings-tab="github">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
             <span>GitHub</span>
@@ -1996,6 +2001,81 @@
           </div>
         </div>
 
+        <!-- ═══ SECRETS TAB ═══ -->
+        <div data-settings-panel="secrets" class="hidden">
+          <div class="admin-card">
+            <h2><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;opacity:0.6"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>Secrets &amp; Environment</h2>
+            <div class="admin-toggle-sub" style="margin-bottom:8px">
+              Manage API keys, tokens, and configuration as environment variables. In HF Spaces, secrets are set via Space Settings and injected at runtime — <code>.env</code> files are not persistent.
+            </div>
+            <div id="secrets-space-banner"></div>
+            <div class="settings-row" style="align-items:center;margin-bottom:8px;">
+              <button class="admin-btn-add" id="secrets-refresh-btn" style="font-size:11px;">Refresh</button>
+              <span id="secrets-summary" style="font-size:11px;margin-left:8px;"></span>
+              <span id="secrets-status-msg" style="font-size:11px;margin-left:8px;"></span>
+            </div>
+            <div id="secrets-list" style="max-height:400px;overflow-y:auto;font-size:11px;border:1px solid var(--border);border-radius:4px;"></div>
+          </div>
+
+          <!-- Add custom secret -->
+          <div class="admin-card">
+            <h2><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;opacity:0.6"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Secret / Variable</h2>
+            <div class="admin-toggle-sub" style="margin-bottom:8px">
+              Add a new environment variable or secret. In HF Spaces, this sets it as a Space secret (triggers restart). Locally, it sets it in the current process only.
+            </div>
+            <div class="settings-row" style="align-items:center;margin-bottom:6px;">
+              <input id="secrets-custom-key" type="text" placeholder="API_KEY_NAME" style="flex:1;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--fg);font-family:monospace;font-size:12px;text-transform:uppercase;">
+              <input id="secrets-custom-value" type="password" placeholder="Value" style="flex:1;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--fg);font-family:inherit;font-size:12px;margin-left:8px;">
+              <label style="font-size:11px;display:flex;align-items:center;gap:4px;margin-left:8px;white-space:nowrap;">
+                <input type="checkbox" id="secrets-custom-is-secret" checked> Secret
+              </label>
+              <button class="admin-btn-add" id="secrets-custom-add-btn" style="margin-left:8px;white-space:nowrap;">Add</button>
+            </div>
+            <span id="secrets-custom-msg" style="font-size:11px;"></span>
+          </div>
+
+          <!-- Space secrets list (HF Spaces only) -->
+          <div class="admin-card" id="secrets-space-actions" style="display:none;">
+            <h2><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;opacity:0.6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Space Secrets</h2>
+            <div class="admin-toggle-sub" style="margin-bottom:8px">
+              Secrets currently set on this HF Space. Deleting a secret triggers a restart.
+            </div>
+            <div class="settings-row" style="align-items:center;margin-bottom:8px;">
+              <button class="admin-btn-add" id="secrets-space-refresh-btn" style="font-size:11px;">Refresh</button>
+              <span id="secrets-space-msg" style="font-size:11px;margin-left:8px;"></span>
+            </div>
+            <div id="secrets-space-list" style="max-height:200px;overflow-y:auto;font-size:11px;border:1px solid var(--border);border-radius:4px;"></div>
+          </div>
+
+          <!-- Secret editor modal -->
+          <div id="secrets-editor-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:none;align-items:center;justify-content:center;">
+            <div style="background:var(--bg-panel,var(--bg));border:1px solid var(--border);border-radius:8px;padding:20px;width:400px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+              <h3 style="font-size:13px;margin:0 0 12px;">Set Secret Value</h3>
+              <div style="margin-bottom:8px;">
+                <label style="font-size:10px;opacity:0.6;display:block;margin-bottom:4px;">Key</label>
+                <input id="secrets-editor-key" type="text" readonly style="width:100%;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--fg);font-family:monospace;font-size:12px;opacity:0.7;">
+              </div>
+              <div style="margin-bottom:8px;">
+                <label style="font-size:10px;opacity:0.6;display:block;margin-bottom:4px;">Value</label>
+                <div style="display:flex;gap:6px;">
+                  <input id="secrets-editor-value" type="password" placeholder="Enter value..." style="flex:1;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--fg);font-family:inherit;font-size:12px;">
+                  <button id="secrets-editor-toggle" style="padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--fg);font-size:10px;cursor:pointer;">Show</button>
+                </div>
+              </div>
+              <div style="margin-bottom:12px;">
+                <label style="font-size:11px;display:flex;align-items:center;gap:4px;">
+                  <input type="checkbox" id="secrets-editor-is-secret" checked> Mark as secret (masked in HF Spaces UI)
+                </label>
+              </div>
+              <div class="settings-row" style="justify-content:flex-end;gap:8px;">
+                <button id="secrets-editor-cancel" style="padding:6px 14px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--fg);font-family:inherit;font-size:12px;cursor:pointer;">Cancel</button>
+                <button class="admin-btn-add" id="secrets-editor-save" style="padding:6px 14px;font-size:12px;">Save</button>
+              </div>
+              <span id="secrets-editor-msg" style="font-size:11px;display:block;margin-top:8px;"></span>
+            </div>
+          </div>
+        </div>
+
         <!-- ═══ GITHUB TAB ═══ -->
         <div data-settings-panel="github" class="hidden">
           <div class="admin-card">
@@ -2468,6 +2548,7 @@
 <script type="module" src="/static/js/censor.js"></script>
 <script type="module" src="/static/js/settings.js"></script>
 <script type="module" src="/static/js/hfBuckets.js"></script>
+<script type="module" src="/static/js/hfSecrets.js"></script>
 <script type="module" src="/static/js/githubRepos.js"></script>
 <script type="module" src="/static/js/admin.js"></script>
 <script type="module" src="/static/js/assistant.js"></script>
