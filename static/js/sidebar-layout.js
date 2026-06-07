@@ -68,7 +68,12 @@ export function initSidebarLayout(Storage, opts) {
     if (incogBtn) {
       if (isRight && sidebarHidden) {
         incogBtn.style.right = '48px';
+        incogBtn.style.left = '';
+      } else if (!isRight && sidebarHidden) {
+        incogBtn.style.left = '48px';
+        incogBtn.style.right = '';
       } else {
+        incogBtn.style.left = '';
         incogBtn.style.right = '';
       }
     }

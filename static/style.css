@@ -241,7 +241,8 @@ body.bg-pattern-sparkles {
 
     .chat-new-btn {
       position: absolute;
-      right: 7px;
+      left: 7px;
+      right: auto;
       top: 50%;
       transform: translateY(-50%);
       background: none;
@@ -264,8 +265,8 @@ body.bg-pattern-sparkles {
     }
     /* Flip new-chat and incognito when sidebar is on the right */
     body:has(.sidebar.right-side) .chat-new-btn {
-      right: auto;
-      left: 12px;
+      left: auto;
+      right: 7px;
     }
     body:has(.sidebar.right-side) .incognito-indicator {
       left: auto;
@@ -273,6 +274,9 @@ body.bg-pattern-sparkles {
     }
     body.sidebar-collapsed.hamburger-right .incognito-indicator {
       right: 42px;
+    }
+    body.sidebar-collapsed.hamburger-left .incognito-indicator {
+      left: 42px;
     }
 
     /* Session meta — sits at top of chat area, scrolls with content */
@@ -4106,7 +4110,7 @@ body.bg-pattern-sparkles {
     }
     @media (max-width:768px){
       .box { max-height:none; }
-      .chat-container { padding:8px; flex:1; margin-top:0; padding-top:52px; min-height:0; }
+      .chat-container { padding:8px; flex:1; margin-top:0; padding-top:48px; min-height:0; }
       .scroll-nav-btn { width:44px; height:44px; font-size:14px; margin-bottom:0; }
       .send-btn { width:48px; height:48px !important; border-radius:12px; }
       .send-btn svg { width:22px; height:22px; }
@@ -4161,7 +4165,7 @@ body.bg-pattern-sparkles {
       .sidebar:not(.hidden) {
         overscroll-behavior: auto;
       }
-      /* Sidebar header — room for hamburger */
+      /* Sidebar header — room for hamburger on left */
       .sidebar-header {
         padding: 14px 12px 8px 12px;
         min-height: 44px;
@@ -4170,6 +4174,14 @@ body.bg-pattern-sparkles {
       .sidebar-brand-title {
         font-size: 1.2rem;
         left: 0 !important;
+      }
+      /* Sidebar brand — left-aligned for left sidebar */
+      .sidebar-brand {
+        justify-content: flex-end !important;
+        padding: 2px 4px 4px 30px !important;
+      }
+      .sidebar-brand-title {
+        margin-left: 0 !important;
       }
       /* Sidebar inner — bigger spacing */
       .sidebar-inner {
@@ -4253,10 +4265,10 @@ body.bg-pattern-sparkles {
       .section-header-flex h4::before {
         height: 18px;
       }
-      /* Compact top bar on mobile — cleaner layout */
+      /* Compact top bar on mobile — room for hamburger on left */
       .chat-top-bar {
-        padding: 4px 8px;
-        min-height: 20px;
+        padding: 4px 8px 4px 48px;
+        min-height: 44px;
         margin-top: 0;
         padding-top: 0;
       }
@@ -4268,12 +4280,12 @@ body.bg-pattern-sparkles {
         padding: 4px 10px;
         font-size: 10px;
       }
-      /* Incognito indicator — right side next to hamburger on mobile */
+      /* Incognito indicator — right side on mobile (next to new chat button) */
       .incognito-indicator {
         position: fixed;
         top: 12px;
+        right: 52px !important;
         left: auto !important;
-        right: 48px !important;
         transform: none;
         width: 32px;
         height: 32px;
@@ -4329,13 +4341,13 @@ body.bg-pattern-sparkles {
         display: inline-block !important;
         opacity: 0.6;
       }
-      /* Hamburger — always right on mobile */
+      /* Hamburger — always left on mobile (matches left sidebar) */
       .hamburger-btn {
         width: 44px;
         height: 44px;
         top: 4px;
-        left: auto !important;
-        right: 4px !important;
+        left: 4px !important;
+        right: auto !important;
         -webkit-tap-highlight-color: transparent;
         opacity: 0.7;
       }
@@ -4345,12 +4357,13 @@ body.bg-pattern-sparkles {
         border: none !important;
         box-shadow: none !important;
       }
-      /* New chat — always left on mobile */
+      /* New chat — always right on mobile (opposite hamburger) */
       .mobile-new-chat-btn {
         display: flex;
         position: fixed;
         top: 6px;
-        left: 6px;
+        right: 6px;
+        left: auto;
         z-index: 210;
         width: 44px;
         height: 44px;
