@@ -1880,10 +1880,11 @@ body.bg-pattern-sparkles {
       transform: translate(-50%, -50%) scale(0.95);
     }
     @media (max-width: 768px) {
-      #welcome-screen { top: 42%; }
-      #welcome-screen .welcome-name { margin-bottom: 2px; }
-      #welcome-screen .welcome-sub { margin-bottom: 0; }
-      #welcome-screen .incognito-btn { margin-top: 6px; }
+      #welcome-screen { top: 38%; }
+      #welcome-screen .welcome-name { margin-bottom: 4px; font-size:1.8rem; }
+      #welcome-screen .welcome-sub { margin-bottom: 0; font-size:0.82rem; opacity:0.7; max-width:280px; }
+      #welcome-screen .welcome-tip { font-size: 0.72rem; max-width: 260px; }
+      #welcome-screen .incognito-btn { margin-top: 8px; padding: 6px 14px; font-size: 11px; }
     }
     #welcome-screen .welcome-name {
       font-size:2.2rem;
@@ -1978,6 +1979,7 @@ body.bg-pattern-sparkles {
         margin-bottom:0;
         margin-left:0;
         margin-right:0;
+        max-width: 100%;
       }
     }
     .msg {
@@ -4082,7 +4084,7 @@ body.bg-pattern-sparkles {
     }
     @media (max-width:768px){
       .box { max-height:none; }
-      .chat-container { padding:10px; flex:1; margin-top:0; padding-top:42px; min-height:0; }
+      .chat-container { padding:8px; flex:1; margin-top:0; padding-top:52px; min-height:0; }
       .scroll-nav-btn { width:44px; height:44px; font-size:14px; margin-bottom:0; }
       .send-btn { width:48px; height:48px !important; border-radius:12px; }
       .send-btn svg { width:22px; height:22px; }
@@ -4094,15 +4096,15 @@ body.bg-pattern-sparkles {
         position: fixed !important;
         top: 0; bottom: 0; left: 0;
         z-index: 200;
-        width: 80% !important;
-        max-width: 340px;
-        box-shadow: 4px 0 20px rgba(0,0,0,0.5);
-        transition: transform 0.25s ease, opacity 0.25s ease !important;
+        width: 85% !important;
+        max-width: 320px;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.6);
+        transition: transform 0.2s ease, opacity 0.2s ease !important;
         opacity: 1 !important;
         overflow: hidden !important;
       }
       .sidebar.hidden {
-        width: 80% !important;
+        width: 85% !important;
         transform: translateX(-100%);
         pointer-events: none;
         overflow: hidden !important;
@@ -4119,10 +4121,11 @@ body.bg-pattern-sparkles {
         position: fixed;
         inset: 0;
         z-index: 199;
-        background: rgba(0,0,0,0.4);
+        background: rgba(0,0,0,0.5);
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.35s ease;
+        transition: opacity 0.25s ease;
+        -webkit-tap-highlight-color: transparent;
       }
       #sidebar-backdrop.visible { opacity: 1; pointer-events: auto; }
       /* Elastic overscroll on sidebar */
@@ -4223,12 +4226,12 @@ body.bg-pattern-sparkles {
       .section-header-flex h4::before {
         height: 18px;
       }
-      /* Compact top bar on mobile — align with sidebar header */
+      /* Compact top bar on mobile — cleaner layout */
       .chat-top-bar {
-        padding: 1px 8px;
-        min-height: 14px;
-        margin-top: -31px;
-        padding-top: 31px;
+        padding: 4px 8px;
+        min-height: 20px;
+        margin-top: 0;
+        padding-top: 0;
       }
       .chat-top-bar .chat-new-btn { display: none; }
       .chat-meta-overlay { font-size: 0.65em; max-width: 55%; overflow: visible; left: 50%; top: 50%; transform: translate(-50%, -50%); position: absolute; }
@@ -4303,10 +4306,11 @@ body.bg-pattern-sparkles {
       .hamburger-btn {
         width: 44px;
         height: 44px;
-        top: 6px;
+        top: 4px;
         left: auto !important;
         right: 4px !important;
         -webkit-tap-highlight-color: transparent;
+        opacity: 0.7;
       }
       .hamburger-btn:hover,
       .hamburger-btn:active {
@@ -4318,11 +4322,11 @@ body.bg-pattern-sparkles {
       .mobile-new-chat-btn {
         display: flex;
         position: fixed;
-        top: 12px;
-        left: 8px;
+        top: 6px;
+        left: 6px;
         z-index: 210;
-        width: 32px;
-        height: 32px;
+        width: 44px;
+        height: 44px;
         align-items: center;
         justify-content: center;
         background: none;
@@ -21617,11 +21621,11 @@ body:not(.welcome-ready) #welcome-screen,
 body:not(.welcome-ready) .welcome-name {
   animation: none !important;
 }
-/* Hold the splash invisible (the entrance's start state) until ready, so when
-   the animation is released it fades/wipes in smoothly instead of flashing
-   from fully-visible to the animation's hidden first frame. */
+/* Show the welcome screen immediately — only block the entrance animation
+   until the app is settled. The previous opacity:0 gate caused a blank
+   screen for 1+ seconds on slow networks, making the UI feel unresponsive. */
 body:not(.welcome-ready) #welcome-screen {
-  opacity: 0;
+  opacity: 0.85;
 }
 @keyframes welcome-name-reveal {
   from {

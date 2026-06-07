@@ -398,8 +398,10 @@ window.addEventListener('pageshow', clearFreshComposerRestore);
       requestAnimationFrame(() => document.body.classList.add('welcome-ready'))
     );
   }
+  // Try font-ready first (fast on cached fonts), but don't wait long
   try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(release); } catch (_) {}
   if (document.readyState === 'complete') release();
   else window.addEventListener('load', release);
-  setTimeout(release, 1200);  // hard fallback — never leave the splash hidden
+  // Reduced from 1200ms to 400ms — never block the UI for over a second
+  setTimeout(release, 400);
 })();

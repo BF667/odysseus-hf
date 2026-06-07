@@ -4035,7 +4035,12 @@ function startOdysseusApp() {
     // the sidebar as they arrive. This prevents the loader from blocking
     // all interaction while waiting for the /api/sessions response.
     const loader = document.getElementById('app-loader');
-    if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 300); }
+    if (loader) {
+      // Make it non-blocking immediately so the user can interact
+      loader.style.pointerEvents = 'none';
+      loader.style.opacity = '0';
+      setTimeout(() => loader.remove(), 200);
+    }
 
     // Load sessions in the background (non-blocking)
     sessionModule.loadSessions()
