@@ -78,8 +78,9 @@ export function initSidebarLayout(Storage, opts) {
   _syncRailSideFn = _syncRailSideCore;
   window.syncRailSide = syncRailSide;
 
-  // Restore sidebar side preference
-  if (Storage.get(Storage.KEYS.SIDEBAR_SIDE) === 'right') {
+  // Restore sidebar side preference — default to right side
+  const savedSide = Storage.get(Storage.KEYS.SIDEBAR_SIDE);
+  if (savedSide !== 'left') {
     document.getElementById('sidebar').classList.add('right-side');
   }
   syncRailSide();

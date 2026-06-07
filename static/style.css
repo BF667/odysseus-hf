@@ -4091,30 +4091,31 @@ body.bg-pattern-sparkles {
       #compare-toggle-btn { display:none !important; }
       .section[draggable] { -webkit-user-drag:none; }
       .drag-handle, .item-drag-handle, .folder-drag-handle { display:none !important; }
-      /* Sidebar overlays chat on mobile */
+      /* Sidebar overlays chat on mobile — default right side */
       .sidebar {
         position: fixed !important;
-        top: 0; bottom: 0; left: 0;
+        top: 0; bottom: 0;
+        right: 0; left: auto;
         z-index: 200;
         width: 85% !important;
         max-width: 320px;
-        box-shadow: 4px 0 24px rgba(0,0,0,0.6);
+        box-shadow: -4px 0 24px rgba(0,0,0,0.6);
         transition: transform 0.2s ease, opacity 0.2s ease !important;
         opacity: 1 !important;
         overflow: hidden !important;
       }
       .sidebar.hidden {
         width: 85% !important;
-        transform: translateX(-100%);
+        transform: translateX(100%);
         pointer-events: none;
         overflow: hidden !important;
       }
-      .sidebar.right-side.hidden {
-        transform: translateX(100%);
+      .sidebar:not(.right-side) {
+        left: 0; right: auto;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.6);
       }
-      .sidebar.right-side {
-        left: auto; right: 0;
-        box-shadow: -4px 0 20px rgba(0,0,0,0.5);
+      .sidebar:not(.right-side).hidden {
+        transform: translateX(-100%);
       }
       /* Backdrop behind sidebar */
       #sidebar-backdrop {
