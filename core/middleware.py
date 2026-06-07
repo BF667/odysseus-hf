@@ -94,7 +94,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                     "media-src 'self' blob: https:; "
                     "connect-src 'self' https: wss:; "
                     "frame-src 'self' https:; "
-                    "frame-ancestors https://*.hf.space 'none'"
+                    "frame-ancestors https://*.hf.space https://huggingface.co"
                 )
             else:
                 response.headers["X-Frame-Options"] = "DENY"

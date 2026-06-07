@@ -137,20 +137,20 @@ def setup_secrets_routes() -> APIRouter:
         if not key:
             raise HTTPException(400, "Key cannot be empty.")
 
-        if not confirm_delete(key):
-            pass  # We allow the delete
+        # Safety check — prevent deleting critical secrets remotely
+        critical_keys = {"HF_TOKEN"}
+        if key in critical_keys:
+            raise HTTPException(
+                400,
+                f"Cannot delete critical secret '{key}' remotely. "
+                "Remove it from the Space Settings UI instead."
+            )
 
         try:
             result = mgr.delete_space_secret(key, is_secret=body.is_secret)
             return result
         except Exception as e:
             raise HTTPException(500, f"Failed to delete Space secret: {e}")
-
-    def confirm_delete(key: str) -> bool:
-        """Safety check — prevent deleting critical secrets."""
-        # These are too dangerous to delete remotely
-        critical = {"HF_TOKEN"}
-        return key in critical
 
     # ── Local env helpers ─────────────────────────────────────────────
 
