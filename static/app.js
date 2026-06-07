@@ -4030,12 +4030,17 @@ function startOdysseusApp() {
       scrollHistory: uiModule.scrollHistoryInstant
     });
 
-    // Load sessions first (critical path) — remove loader when done
+    // Dismiss the loading overlay immediately — the UI skeleton is
+    // already rendered; sessions load in the background and populate
+    // the sidebar as they arrive. This prevents the loader from blocking
+    // all interaction while waiting for the /api/sessions response.
+    const loader = document.getElementById('app-loader');
+    if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 300); }
+
+    // Load sessions in the background (non-blocking)
     sessionModule.loadSessions()
       .catch(e => console.warn('loadSessions error:', e))
       .finally(() => {
-        const loader = document.getElementById('app-loader');
-        if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 300); }
         // Fire any URL route opener now that sessions + module wiring are
         // ready. Deferred from up top of init for exactly this reason.
         if (window._odysseusRouteOpener) {
@@ -4058,12 +4063,7 @@ function startOdysseusApp() {
   }).catch(() => {});
   modelsModule.refreshProviders();
   ragModule.loadPersonalDocs();
-  memoryModule.loadMemories(); // Ensure memories are loaded on page load
-  
-  // Ensure the memory list is rendered after loading
-  setTimeout(async () => {
-    await memoryModule.loadMemories();
-  }, 1000);
+  memoryModule.loadMemories().catch(() => {}); // Non-critical background load
   
   // Ensure proper initial state
   voiceRecorderModule.init();

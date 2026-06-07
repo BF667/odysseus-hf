@@ -1343,8 +1343,10 @@ function _animateSessionRowsRemoving(ids, selector) {
 
 export async function loadSessions() {
   try {
-    // Delete incognito sessions left over from a previous page load
-    await _cleanupIncognitoSessions();
+    // Fire-and-forget incognito cleanup — don't block the session list
+    // fetch. The cleanup deletes stale sessions from previous page loads;
+    // it doesn't affect the current session list rendering.
+    _cleanupIncognitoSessions().catch(() => {});
 
     // Use prefetched data from login page if available (first load only)
     const prefetched = sessionStorage.getItem('ody-prefetch-sessions');
