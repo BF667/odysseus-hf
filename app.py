@@ -177,6 +177,7 @@ if AUTH_ENABLED:
         "/api/auth/integrations/presets",
         "/api/health",
         "/api/version",
+        "/api/github/oauth/callback",
         "/login",
     }
     AUTH_EXEMPT_PREFIXES = ["/static"]
@@ -732,6 +733,14 @@ app.include_router(setup_vault_routes())
 from routes.bucket_routes import setup_bucket_routes
 app.include_router(setup_bucket_routes())
 logger.info("HF Bucket routes initialized")
+
+# GitHub OAuth & Repository Management
+from src.github_oauth import get_github_oauth
+github_oauth = get_github_oauth()
+app.state.github_oauth = github_oauth
+from routes.github_routes import setup_github_routes
+app.include_router(setup_github_routes())
+logger.info("GitHub OAuth routes initialized")
 
 # Contacts (CardDAV)
 from routes.contacts_routes import setup_contacts_routes

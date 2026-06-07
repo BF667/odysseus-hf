@@ -22,6 +22,9 @@ A self-hosted AI workspace — meant to be the self-hosted version of the UI exp
 | **Bucket REST API** | Full CRUD API at `/api/buckets/` for programmatic bucket and file management |
 | **Auto-Bucket Bootstrap** | Set `ODYSSEUS_AUTO_BUCKET=1` and a private bucket is created for you on first boot |
 | **Entrypoint Bootstrap** | `docker/entrypoint-spaces.sh` handles token validation, bucket setup, ChromaDB startup, and data sync |
+| **GitHub OAuth** | Login with GitHub via OAuth2 Authorization Code flow — manage repos from the UI |
+| **GitHub Repo Management** | Create, delete, fork, and update repositories; push files; list branches and contents |
+| **GitHub UI** | Settings → GitHub tab — connect account, browse repos, publish project, one-click delete |
 
 ## Fork File Map
 
@@ -34,8 +37,11 @@ The following files were added or modified in this fork on top of the [upstream 
 | `src/hf_bucket_storage.py` | Added | `HfBucketStorage` class — Python interface for HF Bucket CRUD and file ops |
 | `routes/bucket_routes.py` | Added | FastAPI router at `/api/buckets/` — 12 endpoints for bucket management |
 | `static/js/hfBuckets.js` | Added | Front-end UI for bucket creation, selection, file management |
-| `.env.example` | Modified | Added HF Bucket environment variables section |
-| `README.md` | Modified | Added HF Spaces deployment tutorial and fork documentation |
+| `src/github_oauth.py` | Added | `GitHubOAuth` class — OAuth2 flow, repo CRUD, file push/pull via GitHub API |
+| `routes/github_routes.py` | Added | FastAPI router at `/api/github/` — 16 endpoints for OAuth and repo management |
+| `static/js/githubRepos.js` | Added | Front-end UI for GitHub auth, repo listing, creation, deletion, publishing |
+| `.env.example` | Modified | Added HF Bucket and GitHub OAuth environment variables sections |
+| `README.md` | Modified | Added HF Spaces deployment tutorial, GitHub docs, and fork documentation |
 
 ## Features
 
@@ -52,6 +58,7 @@ The following files were added or modified in this fork on top of the [upstream 
 | **Notes & Tasks** | Quick notes with reminders, a todo list, and scheduled tasks | Note pings, checklist, cron-style tasks, ntfy/browser/email channels |
 | **Calendar** | Local-first calendar with CalDAV sync | CalDAV pull, .ics import/export, per-calendar colors, agent-aware |
 | **HF Buckets** | Cloud storage with HF Storage Buckets — persistent across restarts | huggingface_hub, Xet, S3-compatible, auto-bucket bootstrap |
+| **GitHub** | OAuth login + repo management — create, publish, delete repos from the UI | GitHub OAuth2, REST API, repo CRUD, file push/pull |
 | **Mobile** | Looks and runs great on your phone, not just desktop | Responsive, installable (PWA), touch gestures |
 | **Extras** | More to explore — happy if you give it a go | Image editor, theme editor, file uploads (vision + PDF), web search, presets, sessions, 2FA |
 
@@ -555,6 +562,14 @@ Most setup is done inside the app with `/setup` or **Settings**. Use `.env` for 
 | `ODYSSEUS_BUCKET_REGION` | `us` | Storage region for auto-created buckets |
 | `ODYSSEUS_HF_SPACES` | `0` | Set `1` when running inside an HF Space (adjusts ports, disables auth) |
 
+#### GitHub Integration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GITHUB_CLIENT_ID` | — | GitHub OAuth App client ID |
+| `GITHUB_CLIENT_SECRET` | — | GitHub OAuth App client secret |
+| `OAUTH_REDIRECT_BASE_URL` | — | Public URL for OAuth callback (auto-detected from request if not set) |
+
 #### Misc
 
 | Variable | Default | Description |
@@ -594,11 +609,14 @@ app.py                   # FastAPI entry point
 core/      auth, database, middleware, constants
 src/       llm_core, agent_loop, agent_tools, chat_processor, search/
            hf_bucket_storage.py  — HF Bucket cloud storage backend
+           github_oauth.py       — GitHub OAuth2 + repo management
 routes/    chat, session, document, memory, model … endpoints
            bucket_routes.py      — HF Bucket management API
+           github_routes.py      — GitHub OAuth & repo management API
 services/  docs, memory, search, hwfit (Cookbook) …
 static/    index.html + app.js + style.css + js/ (modular front-end)
            js/hfBuckets.js       — Bucket UI (create, select, manage)
+           js/githubRepos.js     — GitHub UI (auth, repos, publish)
 docker/    entrypoint-spaces.sh  — HF Spaces bootstrap script
 Dockerfile.spaces               — HF Spaces-optimized Docker image
 docs/      landing page (index.html) + preview clips
@@ -618,6 +636,7 @@ All user data lives in `data/` (gitignored):
 | `data/chroma/` | ChromaDB vector store data |
 | `data/settings.json` | Application settings |
 | `data/hf_bucket_settings.json` | HF Bucket configuration (fork addition) |
+| `data/github_oauth_settings.json` | GitHub OAuth token and settings (fork addition) |
 
 ## Internal Ports
 
@@ -630,6 +649,64 @@ All user data lives in `data/` (gitignored):
 | `8100` | ChromaDB host port for manual/compose access |
 | `11434` | Ollama |
 | `8000-8020` | Common local model/provider APIs |
+
+## GitHub Integration
+
+Connect your GitHub account to manage repositories directly from Odysseus. Create, publish, fork, and delete repos — all from the **Settings → GitHub** tab.
+
+### Setup
+
+1. **Create a GitHub OAuth App** at [https://github.com/settings/developers](https://github.com/settings/developers)
+2. Set the **Authorization callback URL** to:
+   - Local dev: `http://localhost:7000/api/github/oauth/callback`
+   - HF Spaces: `https://{user}-{space}.hf.space/api/github/oauth/callback`
+3. Set the following environment variables:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GITHUB_CLIENT_ID` | Yes | OAuth App client ID from GitHub |
+| `GITHUB_CLIENT_SECRET` | Yes | OAuth App client secret from GitHub |
+| `OAUTH_REDIRECT_BASE_URL` | No | Public URL of your Odysseus instance (for callback URL building) |
+
+4. Restart Odysseus, go to **Settings → GitHub**, and click **Connect GitHub Account**
+
+### GitHub REST API
+
+All GitHub operations are available as REST API endpoints under `/api/github/`:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/github/oauth/authorize` | GET | Start OAuth2 flow — returns GitHub authorization URL |
+| `/api/github/oauth/callback` | GET | OAuth2 callback (GitHub redirects here) |
+| `/api/github/oauth/disconnect` | POST | Disconnect GitHub account |
+| `/api/github/status` | GET | Integration status and user info |
+| `/api/github/user` | GET | Authenticated user profile |
+| `/api/github/orgs` | GET | List user organizations |
+| `/api/github/repos` | GET | List repositories |
+| `/api/github/repos/{owner}/{repo}` | GET | Get repository details |
+| `/api/github/repos` | POST | Create a new repository |
+| `/api/github/repos/{owner}/{repo}` | PATCH | Update repository settings |
+| `/api/github/repos/{owner}/{repo}` | DELETE | Delete a repository (requires confirm param) |
+| `/api/github/repos/fork` | POST | Fork a repository |
+| `/api/github/repos/{owner}/{repo}/branches` | GET | List repository branches |
+| `/api/github/files/push` | POST | Create or update a file in a repo |
+| `/api/github/files/{owner}/{repo}` | GET | List repository contents |
+| `/api/github/files/{owner}/{repo}/{path}` | GET | Get a file's content |
+| `/api/github/files/delete` | POST | Delete a file from a repo |
+| `/api/github/rate-limit` | GET | Current API rate limit status |
+
+### GitHub OAuth Scopes
+
+The default OAuth scope is `repo,user,read:org` which grants:
+
+| Scope | Access |
+|-------|--------|
+| `repo` | Full control of public and private repositories |
+| `user` | Read access to user profile data |
+| `read:org` | Read access to organization membership |
+| `delete_repo` | Delete repositories (must be added to scope manually) |
+
+> **Note:** To delete repositories via the API, you must add the `delete_repo` scope to your OAuth App's authorization URL. Edit the `scope` parameter in `src/github_oauth.py` to include it.
 
 ## Troubleshooting & Advanced Setup
 

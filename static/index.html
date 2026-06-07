@@ -1391,6 +1391,11 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
             <span>Cloud Storage</span>
           </button>
+          <!-- Section 6: GitHub -->
+          <button class="settings-nav-item" data-settings-tab="github">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            <span>GitHub</span>
+          </button>
           <div class="settings-sidebar-divider admin-only"></div>
           <div class="settings-sidebar-label admin-only">Admin</div>
           <button class="settings-nav-item admin-only" data-settings-tab="tools">
@@ -1991,6 +1996,76 @@
           </div>
         </div>
 
+        <!-- ═══ GITHUB TAB ═══ -->
+        <div data-settings-panel="github" class="hidden">
+          <div class="admin-card">
+            <h2><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;opacity:0.6"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>GitHub Integration</h2>
+            <div class="admin-toggle-sub" style="margin-bottom:12px">
+              Connect your GitHub account to manage repositories directly from Odysseus. Create, publish, and delete repos — all from the UI.
+            </div>
+
+            <!-- Auth section (shown when not connected) -->
+            <div id="gh-auth-section" style="margin-bottom:8px;">
+              <div class="settings-col">
+                <div class="admin-toggle-sub" style="margin-bottom:8px;">
+                  To get started, you need to create a <a href="https://github.com/settings/developers" target="_blank" rel="noopener" style="color:var(--brand-color,var(--red,#e06c75));">GitHub OAuth App</a> and set the <code>GITHUB_CLIENT_ID</code> and <code>GITHUB_CLIENT_SECRET</code> environment variables. The callback URL should be <code>{your-odysseus-url}/api/github/oauth/callback</code>.
+                </div>
+                <button class="admin-btn-add" id="gh-auth-connect" style="display:inline-flex;align-items:center;gap:6px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                  Connect GitHub Account
+                </button>
+                <span id="gh-auth-msg" style="font-size:11px;margin-left:8px;"></span>
+              </div>
+            </div>
+
+            <!-- Connected section (shown when authenticated) -->
+            <div id="gh-connected-section" style="display:none;">
+              <div id="gh-user-info" style="font-size:11px;margin-bottom:8px;"></div>
+              <div class="settings-row" style="align-items:center;">
+                <span id="gh-rate-limit" style="font-size:10px;opacity:0.5;flex:1;"></span>
+                <button id="gh-disconnect-btn" style="background:color-mix(in srgb, var(--color-error) 10%, transparent);border:1px solid var(--color-error);border-radius:6px;padding:4px 10px;color:var(--color-error);font-family:inherit;font-size:11px;font-weight:500;cursor:pointer;">Disconnect</button>
+                <span id="gh-connected-msg" style="font-size:11px;margin-left:8px;"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-card" id="gh-config-card" style="opacity:0.5;pointer-events:none;">
+            <h2><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;opacity:0.6"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Repositories</h2>
+            <div class="settings-col">
+              <div class="settings-row" style="align-items:center;margin-bottom:8px;">
+                <button class="admin-btn-add" id="gh-refresh-repos-btn" style="font-size:11px;">Refresh</button>
+                <span id="gh-repos-msg" style="font-size:11px;margin-left:8px;"></span>
+              </div>
+              <div id="gh-repos-list" style="max-height:250px;overflow-y:auto;font-size:11px;border:1px solid var(--border);border-radius:4px;"></div>
+            </div>
+
+            <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px;">
+              <div style="font-size:12px;font-weight:500;margin-bottom:8px;">Create New Repository</div>
+              <div class="settings-row" style="align-items:center;margin-bottom:6px;">
+                <input id="gh-new-repo-name" type="text" placeholder="my-awesome-project" style="flex:1;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--fg);font-family:inherit;font-size:12px;">
+                <label style="font-size:11px;display:flex;align-items:center;gap:4px;margin-left:8px;">
+                  <input type="checkbox" id="gh-new-repo-private" checked> Private
+                </label>
+                <button class="admin-btn-add" id="gh-create-repo-btn" style="margin-left:8px;white-space:nowrap;">Create</button>
+              </div>
+              <input id="gh-new-repo-desc" type="text" placeholder="Repository description (optional)" style="width:100%;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--fg);font-family:inherit;font-size:12px;margin-bottom:4px;">
+              <span id="gh-repo-msg" style="font-size:11px;"></span>
+            </div>
+          </div>
+
+          <div class="admin-card" id="gh-publish-card" style="opacity:0.5;pointer-events:none;">
+            <h2><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;opacity:0.6"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>Publish Project</h2>
+            <div class="admin-toggle-sub" style="margin-bottom:8px">
+              Push your Odysseus workspace configuration to a new GitHub repository for backup and sharing.
+            </div>
+            <div class="settings-row" style="align-items:center;">
+              <input id="gh-publish-repo-name" type="text" placeholder="my-odysseus-config" style="flex:1;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--fg);font-family:inherit;font-size:12px;">
+              <button class="admin-btn-add" id="gh-publish-btn" style="margin-left:8px;white-space:nowrap;">Publish</button>
+              <span id="gh-publish-msg" style="font-size:11px;margin-left:8px;"></span>
+            </div>
+          </div>
+        </div>
+
         <!-- ═══ EMAIL TAB ═══ -->
         <div data-settings-panel="email" class="hidden">
           <div class="admin-card">
@@ -2393,6 +2468,7 @@
 <script type="module" src="/static/js/censor.js"></script>
 <script type="module" src="/static/js/settings.js"></script>
 <script type="module" src="/static/js/hfBuckets.js"></script>
+<script type="module" src="/static/js/githubRepos.js"></script>
 <script type="module" src="/static/js/admin.js"></script>
 <script type="module" src="/static/js/assistant.js"></script>
 <script type="module" src="/static/app.js"></script>  <!-- app.js must be LAST -->
