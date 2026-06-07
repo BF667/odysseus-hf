@@ -1906,11 +1906,11 @@ body.bg-pattern-sparkles {
       transform: translate(-50%, -50%) scale(0.95);
     }
     @media (max-width: 768px) {
-      #welcome-screen { top: 38%; }
-      #welcome-screen .welcome-name { margin-bottom: 4px; font-size:1.8rem; }
-      #welcome-screen .welcome-sub { margin-bottom: 0; font-size:0.82rem; opacity:0.7; max-width:280px; }
-      #welcome-screen .welcome-tip { font-size: 0.72rem; max-width: 260px; }
-      #welcome-screen .incognito-btn { margin-top: 8px; padding: 6px 14px; font-size: 11px; }
+      #welcome-screen { top: 35%; padding: 0 20px; }
+      #welcome-screen .welcome-name { margin-bottom: 8px; font-size:2rem; }
+      #welcome-screen .welcome-sub { margin-bottom: 0; font-size:14px; opacity:0.7; max-width:300px; line-height:1.5; }
+      #welcome-screen .welcome-tip { font-size: 13px; max-width: 280px; opacity: 0.4; line-height: 1.5; }
+      #welcome-screen .incognito-btn { margin-top: 12px; padding: 8px 16px; font-size: 12px; border-radius: 20px; }
     }
     #welcome-screen .welcome-name {
       font-size:2.2rem;
@@ -1999,12 +1999,12 @@ body.bg-pattern-sparkles {
       width: 100%;
     }
     @media (max-width:768px) {
-      #welcome-screen .welcome-name { font-size:1.8rem; }
-      #welcome-screen .welcome-sub { font-size:0.8rem; }
+      #welcome-screen .welcome-name { font-size:2rem; }
+      #welcome-screen .welcome-sub { font-size:14px; }
       .chat-container.welcome-active .chat-input-bar {
         margin-bottom:0;
-        margin-left:0;
-        margin-right:0;
+        margin-left:8px;
+        margin-right:8px;
         max-width: 100%;
       }
     }
@@ -4110,35 +4110,40 @@ body.bg-pattern-sparkles {
     }
     @media (max-width:768px){
       .box { max-height:none; }
-      .chat-container { padding:8px; flex:1; margin-top:0; padding-top:48px; min-height:0; }
-      .scroll-nav-btn { width:44px; height:44px; font-size:14px; margin-bottom:0; }
-      .send-btn { width:48px; height:48px !important; border-radius:12px; }
-      .send-btn svg { width:22px; height:22px; }
-      #compare-toggle-btn { display:none !important; }
-      .section[draggable] { -webkit-user-drag:none; }
-      .drag-handle, .item-drag-handle, .folder-drag-handle { display:none !important; }
-      /* Sidebar overlays chat on mobile — default left side */
+
+      /* ── MOBILE CHAT AREA ── */
+      .chat-container {
+        padding: 0 !important;
+        flex: 1;
+        margin-top: 0;
+        min-height: 0;
+        width: 100%;
+      }
+
+      /* ── MOBILE SIDEBAR ── Full-screen overlay, not cramped side panel */
       .sidebar {
         position: fixed !important;
         top: 0; bottom: 0;
         left: 0; right: auto;
         z-index: 200;
-        width: 85% !important;
-        max-width: 320px;
-        box-shadow: 4px 0 24px rgba(0,0,0,0.6);
-        transition: transform 0.2s ease, opacity 0.2s ease !important;
+        width: 88% !important;
+        max-width: 360px;
+        box-shadow: 6px 0 32px rgba(0,0,0,0.5);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
         opacity: 1 !important;
         overflow: hidden !important;
+        border-radius: 0 16px 16px 0;
       }
       .sidebar.hidden {
-        width: 85% !important;
+        width: 88% !important;
         transform: translateX(-100%);
         pointer-events: none;
         overflow: hidden !important;
       }
       .sidebar.right-side {
         right: 0; left: auto;
-        box-shadow: -4px 0 24px rgba(0,0,0,0.6);
+        box-shadow: -6px 0 32px rgba(0,0,0,0.5);
+        border-radius: 16px 0 0 16px;
       }
       .sidebar.right-side.hidden {
         transform: translateX(100%);
@@ -4148,168 +4153,160 @@ body.bg-pattern-sparkles {
         position: fixed;
         inset: 0;
         z-index: 199;
-        background: rgba(0,0,0,0.5);
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.25s ease;
         -webkit-tap-highlight-color: transparent;
       }
       #sidebar-backdrop.visible { opacity: 1; pointer-events: auto; }
-      /* Elastic overscroll on sidebar */
+      /* Sidebar inner scroll */
       .sidebar-inner {
         -webkit-overflow-scrolling: touch;
-        overscroll-behavior-y: auto;
+        overscroll-behavior-y: contain;
         overflow-y: scroll !important;
-        padding-bottom: 12px !important;
+        padding: 0 8px calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+        gap: 2px !important;
       }
       .sidebar:not(.hidden) {
-        overscroll-behavior: auto;
+        overscroll-behavior: contain;
       }
-      /* Sidebar header — room for hamburger on left */
+      /* Sidebar header — brand with close button area */
       .sidebar-header {
-        padding: 14px 12px 8px 12px;
-        min-height: 44px;
+        padding: 16px 16px 12px 16px !important;
+        min-height: 56px !important;
         flex-shrink: 0;
       }
       .sidebar-brand-title {
-        font-size: 1.2rem;
-        left: 0 !important;
-      }
-      /* Sidebar brand — left-aligned for left sidebar */
-      .sidebar-brand {
-        justify-content: flex-end !important;
-        padding: 2px 4px 4px 30px !important;
-      }
-      .sidebar-brand-title {
+        font-size: 1.3rem !important;
+        letter-spacing: 0.02em;
         margin-left: 0 !important;
       }
-      /* Sidebar inner — bigger spacing */
-      .sidebar-inner {
-        padding: 10px 10px 12px !important;
-        gap: 3px !important;
-        padding-bottom: 12px !important;
+      /* Sidebar brand — centered, clean */
+      .sidebar-brand {
+        justify-content: center !important;
+        padding: 4px 8px !important;
       }
-      /* Sidebar user bar — visible and touch-friendly on mobile */
-      .sidebar-user-bar {
-        padding: 8px 10px !important;
-        padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
-        min-height: 48px !important;
-        flex-shrink: 0;
-        /* Ensure user bar is always visible at bottom of sidebar */
-        border-top: 1px solid var(--border);
-        background: var(--sidebar-bg, var(--panel));
-      }
-      .user-bar-btn {
-        min-width: 44px;
-        min-height: 44px;
-        padding: 8px;
-      }
-      .user-bar-logout-btn {
-        min-width: 44px;
-        min-height: 44px;
-        padding: 8px;
-      }
-      .user-bar-signin-btn {
-        min-height: 44px !important;
-        font-size: 13px !important;
-        padding: 10px 16px !important;
-      }
-      /* Section headers — match list item sizing */
+      /* ── MOBILE SIDEBAR ITEMS ── Big touch targets, readable text */
       .section-header-flex {
-        padding: 12px 10px !important;
-        height: 48px !important;
-        border-radius: 8px;
+        padding: 14px 12px !important;
+        height: auto !important;
+        min-height: 48px !important;
+        border-radius: 10px;
         box-sizing: border-box;
       }
       .section-header-flex h4,
       .section-header-flex .section-title {
-        font-size: 14px !important;
-        gap: 11px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        gap: 8px !important;
       }
       .section-icon,
       .sidebar-action-icon {
-        width: 16px !important;
-        height: 16px !important;
-        left: 0 !important;
+        width: 20px !important;
+        height: 20px !important;
       }
-      /* List items — bigger touch targets, bigger text */
+      .section-icon svg,
+      .sidebar-action-icon svg {
+        width: 18px !important;
+        height: 18px !important;
+      }
+      /* List items — BIG touch targets */
       .list-item {
-        padding: 12px 10px !important;
-        min-height: 48px;
-        font-size: 14px;
-        border-radius: 8px;
-        gap: 10px !important;
+        padding: 14px 12px !important;
+        min-height: 52px;
+        font-size: 15px;
+        border-radius: 10px;
+        gap: 12px !important;
       }
       .list-item .grow {
-        font-size: 14px !important;
+        font-size: 15px !important;
+        line-height: 1.4 !important;
       }
       /* Search, New Chat & Assistant */
       #sidebar-search-btn,
       #sidebar-new-chat-btn,
       .sidebar-assistant-entry {
-        padding: 12px 10px !important;
-        min-height: 48px !important;
+        padding: 14px 12px !important;
+        min-height: 52px !important;
       }
       #sidebar-search-btn .grow,
       #sidebar-new-chat-btn .grow,
       .sidebar-assistant-entry .grow {
-        font-size: 14px !important;
-        left: 0 !important;
+        font-size: 15px !important;
       }
-      /* Section separator — more breathing room */
+      /* Section spacing */
       .section {
-        margin-top: 4px;
-        border-radius: 8px;
+        margin-top: 6px;
+        border-radius: 10px;
       }
-      /* Wave accent — slightly bigger on mobile */
+      /* Wave accent */
       .section-header-flex h4::before {
         height: 18px;
       }
-      /* Compact top bar on mobile — room for hamburger on left */
+      /* Sidebar user bar — always visible at bottom */
+      .sidebar-user-bar {
+        padding: 10px 12px !important;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+        min-height: 52px !important;
+        flex-shrink: 0;
+        border-top: 1px solid var(--border);
+        background: var(--sidebar-bg, var(--panel));
+      }
+      .user-bar-btn {
+        min-width: 48px;
+        min-height: 48px;
+        padding: 10px;
+      }
+      .user-bar-logout-btn {
+        min-width: 48px;
+        min-height: 48px;
+        padding: 10px;
+      }
+      .user-bar-signin-btn {
+        min-height: 48px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        padding: 12px 20px !important;
+        border-radius: 10px !important;
+      }
+      /* ── MOBILE TOP BAR ── */
       .chat-top-bar {
-        padding: 4px 8px 4px 48px;
-        min-height: 44px;
+        padding: 8px 12px 8px 52px;
+        min-height: 48px;
         margin-top: 0;
-        padding-top: 0;
+        display: flex;
+        align-items: center;
       }
       .chat-top-bar .chat-new-btn { display: none; }
-      .chat-meta-overlay { font-size: 0.65em; max-width: 55%; overflow: visible; left: 50%; top: 50%; transform: translate(-50%, -50%); position: absolute; }
-      .chat-meta-overlay .export-dl-btn { display: inline-flex; }
-      /* Incognito — smaller on mobile */
-      .incognito-btn {
-        padding: 4px 10px;
-        font-size: 10px;
-      }
-      /* Incognito indicator — right side on mobile (next to new chat button) */
-      .incognito-indicator {
-        position: fixed;
-        top: 12px;
-        right: 52px !important;
-        left: auto !important;
+      .chat-meta-overlay {
+        font-size: 14px !important;
+        font-weight: 500;
+        max-width: 70%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        position: relative;
+        left: 0; top: 0;
         transform: none;
-        width: 32px;
-        height: 32px;
-        z-index: 210;
-        opacity: 0.8;
       }
-      /* Icon rail on mobile — hidden by default, shown in mini-sidebar state */
-      .icon-rail { display: none !important; }
-      .icon-rail.mobile-mini {
-        display: flex !important;
-        position: fixed;
-        top: 0; bottom: 0; left: 0;
-        z-index: 200;
-        width: 48px;
-        box-shadow: 2px 0 12px rgba(0,0,0,0.4);
+      .chat-meta-overlay .export-dl-btn {
+        min-width: 40px;
+        min-height: 40px;
+        display: inline-flex;
       }
-      .icon-rail.mobile-mini.right-side {
-        left: auto; right: 0;
-        box-shadow: -2px 0 12px rgba(0,0,0,0.4);
+      /* ── MOBILE CHAT HISTORY ── */
+      .chat-history {
+        padding: 0 8px;
       }
-      /* Chat bubbles — AI stretches full width, user stays compact */
-      .msg { font-size: 0.85em; }
-      .msg .body { font-size: 0.9em; }
-      .msg-user { max-width: 90% !important; margin-left: auto; margin-right: 4px; }
+      /* ── MOBILE CHAT BUBBLES ── */
+      .msg { font-size: 15px; line-height: 1.5; }
+      .msg .body { font-size: 15px; line-height: 1.6; }
+      .msg-user { max-width: 85% !important; margin-left: auto; margin-right: 4px; }
       .msg-ai, .agent-thread { width: 100% !important; max-width: 100% !important; margin: 8px 0; }
       /* Prevent inner scrollable elements from trapping vertical scroll */
       .msg pre,
@@ -4321,19 +4318,66 @@ body.bg-pattern-sparkles {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         touch-action: pan-y pan-x;
+        font-size: 13px;
       }
-      /* Models row — match list items */
+      /* Models row — READABLE on mobile */
       .models-row {
-        padding: 12px 10px;
-        min-height: 48px;
+        padding: 14px 12px;
+        min-height: 52px;
+        border-radius: 10px;
       }
-      /* Input icon buttons — bigger touch targets */
+      .models-row select {
+        font-size: 14px !important;
+      }
+      .models-row button {
+        font-size: 13px !important;
+        height: 36px !important;
+        padding: 0 14px !important;
+        border-radius: 8px !important;
+      }
+      .model-chat-btn {
+        height: 36px !important;
+        padding: 0 14px !important;
+        font-size: 13px !important;
+        border-radius: 8px !important;
+      }
+      /* ── MOBILE CHAT INPUT BAR ── */
+      .chat-input-bar {
+        padding: 10px 12px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        border-radius: 20px;
+        margin: 0 8px 8px;
+        width: calc(100% - 16px);
+      }
+      .chat-input-bar textarea#message {
+        font-size: 16px !important; /* Prevents iOS zoom on focus */
+        min-height: 24px;
+        line-height: 1.4;
+      }
+      .chat-input-bar textarea#message::placeholder {
+        font-size: 16px;
+      }
+      /* Model picker button — BIGGER and readable */
+      .model-picker-btn {
+        font-size: 13px !important;
+        padding: 6px 12px !important;
+        min-height: 36px;
+        border-radius: 8px;
+      }
+      .model-picker-btn svg {
+        width: 12px !important;
+        height: 12px !important;
+      }
+      /* Input icon buttons — proper touch targets */
       .input-icon-btn {
         padding: 10px;
         min-width: 44px;
         min-height: 44px;
       }
-      /* Tool indicators — icon only on mobile (hide text, keep x) */
+      .send-btn { width: 48px; height: 48px !important; border-radius: 14px; }
+      .send-btn svg { width: 22px; height: 22px; }
+      .scroll-nav-btn { width: 48px; height: 48px; font-size: 16px; margin-bottom: 0; }
+      /* Tool indicators — icon only on mobile */
       .tool-indicator > span {
         display: none !important;
       }
@@ -4341,15 +4385,17 @@ body.bg-pattern-sparkles {
         display: inline-block !important;
         opacity: 0.6;
       }
-      /* Hamburger — always left on mobile (matches left sidebar) */
+      /* ── MOBILE HAMBURGER ── Top left, big touch target */
       .hamburger-btn {
         width: 44px;
         height: 44px;
-        top: 4px;
-        left: 4px !important;
+        top: 6px;
+        left: 6px !important;
         right: auto !important;
         -webkit-tap-highlight-color: transparent;
-        opacity: 0.7;
+        opacity: 0.8;
+        border-radius: 10px;
+        z-index: 210;
       }
       .hamburger-btn:hover,
       .hamburger-btn:active {
@@ -4357,7 +4403,11 @@ body.bg-pattern-sparkles {
         border: none !important;
         box-shadow: none !important;
       }
-      /* New chat — always right on mobile (opposite hamburger) */
+      .hamburger-btn svg {
+        width: 22px;
+        height: 22px;
+      }
+      /* ── MOBILE NEW CHAT BUTTON ── Top right */
       .mobile-new-chat-btn {
         display: flex;
         position: fixed;
@@ -4373,26 +4423,62 @@ body.bg-pattern-sparkles {
         border: none;
         color: var(--fg);
         cursor: pointer;
-        opacity: 0.5;
+        opacity: 0.6;
         padding: 0;
+        border-radius: 10px;
       }
-      /* Modal close button — bigger on mobile */
+      .mobile-new-chat-btn svg {
+        width: 22px;
+        height: 22px;
+      }
+      /* ── MOBILE INCOGNITO ── */
+      .incognito-btn {
+        padding: 8px 16px;
+        font-size: 12px;
+        border-radius: 20px;
+      }
+      .incognito-indicator {
+        position: fixed;
+        top: 10px;
+        right: 56px !important;
+        left: auto !important;
+        transform: none;
+        width: 36px;
+        height: 36px;
+        z-index: 210;
+        opacity: 0.8;
+        border-radius: 10px;
+      }
+      /* Icon rail on mobile — hidden by default */
+      .icon-rail { display: none !important; }
+      .icon-rail.mobile-mini {
+        display: flex !important;
+        position: fixed;
+        top: 0; bottom: 0; left: 0;
+        z-index: 200;
+        width: 52px;
+        box-shadow: 2px 0 12px rgba(0,0,0,0.4);
+      }
+      .icon-rail.mobile-mini.right-side {
+        left: auto; right: 0;
+        box-shadow: -2px 0 12px rgba(0,0,0,0.4);
+      }
+      /* ── MOBILE MODAL ── */
       .close-btn,
       .modal-close {
         min-width: 44px;
         min-height: 44px;
         width: 44px;
         height: 44px;
-        font-size: 14px;
+        font-size: 16px;
       }
-      /* Code block buttons — slightly bigger touch targets */
+      /* Code block buttons */
       pre .copy-code,
       pre .edit-code,
       pre .run-code {
         width: 44px;
         height: 44px;
       }
-      /* Touch-friendly targets for small buttons */
       .export-dl-btn {
         min-width: 44px;
         min-height: 44px;
@@ -4404,54 +4490,82 @@ body.bg-pattern-sparkles {
         align-items: center;
         justify-content: center;
       }
-      /* 44×44 touch buttons starting from right:6 ends at 50. ~8px gap is
-         enough to be distinguishable without spreading them too far apart. */
-      pre .edit-code {
-        right: 58px;
-      }
-      pre .run-code {
-        right: 110px;
-      }
-      /* Dropdowns — bigger touch targets on mobile */
+      pre .edit-code { right: 58px; }
+      pre .run-code { right: 110px; }
+      /* ── MOBILE DROPDOWNS ── */
       .dropdown-item-compact {
-        padding: 12px 12px !important;
-        font-size: 14px !important;
-        min-height: 44px;
-        gap: 10px !important;
+        padding: 14px 14px !important;
+        font-size: 15px !important;
+        min-height: 48px;
+        gap: 12px !important;
       }
       .dropdown-item-compact .dropdown-icon {
-        width: 18px !important;
-        height: 18px !important;
+        width: 20px !important;
+        height: 20px !important;
       }
       .dropdown-item-compact .dropdown-icon svg {
-        width: 16px !important;
-        height: 16px !important;
+        width: 18px !important;
+        height: 18px !important;
       }
       .dropdown,
       .session-dropdown {
         padding: 6px !important;
         border-radius: 12px !important;
       }
-      /* Safe area padding for notched devices */
-      .chat-input-bar {
-        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-      }
-      /* Mode toggle — larger touch targets */
+      /* ── MOBILE MODE TOGGLE ── */
       .mode-toggle {
-        height: 34px;
+        height: 36px;
         border-radius: 12px;
       }
       .mode-toggle::before {
         border-radius: 11px;
       }
       .mode-toggle-btn {
-        padding: 0 14px;
-        font-size: 12px;
-        min-height: 34px;
+        padding: 0 16px;
+        font-size: 13px;
+        font-weight: 500;
+        min-height: 36px;
       }
       #mode-agent-btn { border-radius: 12px 0 0 12px; }
       #mode-chat-btn { border-radius: 0 12px 12px 0; }
-      /* Diff mode — stack toolbar, bigger buttons */
+      #compare-toggle-btn { display:none !important; }
+      .section[draggable] { -webkit-user-drag:none; }
+      .drag-handle, .item-drag-handle, .folder-drag-handle { display:none !important; }
+      /* ── MOBILE WELCOME SCREEN ── */
+      #welcome-screen {
+        top: 35%;
+        padding: 0 20px;
+      }
+      #welcome-screen .welcome-name {
+        font-size: 2rem;
+        margin-bottom: 8px;
+      }
+      #welcome-screen .welcome-sub {
+        font-size: 14px;
+        opacity: 0.7;
+        max-width: 300px;
+        line-height: 1.5;
+      }
+      #welcome-screen .welcome-tip {
+        font-size: 13px;
+        max-width: 280px;
+        opacity: 0.4;
+        margin-top: 16px;
+        line-height: 1.5;
+      }
+      #welcome-screen .incognito-btn {
+        margin-top: 12px;
+        padding: 8px 16px;
+        font-size: 12px;
+      }
+      /* ── MOBILE CHAT INPUT BAR when welcome active ── */
+      .chat-container.welcome-active .chat-input-bar {
+        margin-bottom: 0;
+        margin-left: 8px;
+        margin-right: 8px;
+        max-width: calc(100% - 16px);
+      }
+      /* Diff mode toolbar */
       .diff-toolbar {
         padding: 8px 12px;
         gap: 6px;
