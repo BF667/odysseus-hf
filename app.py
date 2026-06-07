@@ -85,7 +85,14 @@ app = FastAPI(
 )
 
 # ========= CORS =========
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost,http://127.0.0.1").split(",")
+_default_origins = "http://localhost,http://127.0.0.1"
+# HF Spaces serves from https://<user>-<space>.hf.space — allow the
+# Space's own origin so the browser doesn't block API calls.  The
+# wildcard covers any Space name without opening CORS to the world
+# (HF's reverse proxy only routes to *this* container).
+if os.getenv("ODYSSEUS_HF_SPACES", "0") == "1":
+    _default_origins += ",https://*.hf.space"
+allowed_origins = os.getenv("ALLOWED_ORIGINS", _default_origins).split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,

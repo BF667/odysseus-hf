@@ -80,22 +80,39 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             # Don't overwrite the route's own restrictive CSP either.
             pass
         else:
-            response.headers["X-Frame-Options"] = "DENY"
-            # NOTE: `style-src 'unsafe-inline'` is intentionally retained.
-            # `static/index.html` and `static/login.html` ship inline <style>
-            # blocks, and several JS modules build runtime `style=""` attrs.
-            # Migrating to nonce-only requires templating the HTML files +
-            # auditing every JS-set style attribute. Since inline styles
-            # don't execute script, the residual risk is visual-only.
-            response.headers["Content-Security-Policy"] = (
-                "default-src 'self'; "
-                f"script-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net; "
-                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-                "font-src 'self' https://cdn.jsdelivr.net; "
-                "img-src 'self' data: blob:; "
-                "media-src 'self' blob:; "
-                "connect-src 'self'; "
-                "frame-src 'self'; "
-                "frame-ancestors 'none'"
-            )
+            # HF Spaces runs behind a reverse proxy at *.hf.space;
+            # 'self' alone blocks the browser from connecting back to the
+            # Space's public origin.  Allow the Space domain + WebSocket
+            # upgrades so the UI can make API calls.
+            if os.getenv("ODYSSEUS_HF_SPACES", "0") == "1":
+                response.headers["Content-Security-Policy"] = (
+                    "default-src 'self' https:; "
+                    f"script-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net; "
+                    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                    "font-src 'self' https://cdn.jsdelivr.net; "
+                    "img-src 'self' data: blob: https:; "
+                    "media-src 'self' blob: https:; "
+                    "connect-src 'self' https: wss:; "
+                    "frame-src 'self' https:; "
+                    "frame-ancestors https://*.hf.space 'none'"
+                )
+            else:
+                response.headers["X-Frame-Options"] = "DENY"
+                # NOTE: `style-src 'unsafe-inline'` is intentionally retained.
+                # `static/index.html` and `static/login.html` ship inline <style>
+                # blocks, and several JS modules build runtime `style=""` attrs.
+                # Migrating to nonce-only requires templating the HTML files +
+                # auditing every JS-set style attribute. Since inline styles
+                # don't execute script, the residual risk is visual-only.
+                response.headers["Content-Security-Policy"] = (
+                    "default-src 'self'; "
+                    f"script-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net; "
+                    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                    "font-src 'self' https://cdn.jsdelivr.net; "
+                    "img-src 'self' data: blob:; "
+                    "media-src 'self' blob:; "
+                    "connect-src 'self'; "
+                    "frame-src 'self'; "
+                    "frame-ancestors 'none'"
+                )
         return response
