@@ -209,9 +209,9 @@ body.bg-pattern-sparkles {
     body.sidebar-collapsed.hamburger-right .chat-top-bar {
       padding-right: 38px;
     }
-    /* Default: hamburger on right */
-    body.sidebar-collapsed:not(.hamburger-left) .chat-top-bar {
-      padding-right: 38px;
+    /* Default: hamburger on left */
+    body.sidebar-collapsed:not(.hamburger-right) .chat-top-bar {
+      padding-left: 38px;
     }
     .incognito-indicator {
       position: absolute;
@@ -657,8 +657,8 @@ body.bg-pattern-sparkles {
     .hamburger-btn {
       position: fixed;
       top: 12px;
-      left: auto;
-      right: 9px;
+      left: 9px;
+      right: auto;
       z-index: 210;
       width: 30px;
       height: 30px;
@@ -675,9 +675,9 @@ body.bg-pattern-sparkles {
       padding: 0;
       display: flex;
     }
-    body.hamburger-left .hamburger-btn {
-      left: 9px;
-      right: auto;
+    body.hamburger-right .hamburger-btn {
+      right: 9px;
+      left: auto;
     }
     .mobile-new-chat-btn {
       display: none;
@@ -4113,31 +4113,31 @@ body.bg-pattern-sparkles {
       #compare-toggle-btn { display:none !important; }
       .section[draggable] { -webkit-user-drag:none; }
       .drag-handle, .item-drag-handle, .folder-drag-handle { display:none !important; }
-      /* Sidebar overlays chat on mobile — default right side */
+      /* Sidebar overlays chat on mobile — default left side */
       .sidebar {
         position: fixed !important;
         top: 0; bottom: 0;
-        right: 0; left: auto;
+        left: 0; right: auto;
         z-index: 200;
         width: 85% !important;
         max-width: 320px;
-        box-shadow: -4px 0 24px rgba(0,0,0,0.6);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.6);
         transition: transform 0.2s ease, opacity 0.2s ease !important;
         opacity: 1 !important;
         overflow: hidden !important;
       }
       .sidebar.hidden {
         width: 85% !important;
-        transform: translateX(100%);
+        transform: translateX(-100%);
         pointer-events: none;
         overflow: hidden !important;
       }
-      .sidebar:not(.right-side) {
-        left: 0; right: auto;
-        box-shadow: 4px 0 24px rgba(0,0,0,0.6);
+      .sidebar.right-side {
+        right: 0; left: auto;
+        box-shadow: -4px 0 24px rgba(0,0,0,0.6);
       }
-      .sidebar:not(.right-side).hidden {
-        transform: translateX(-100%);
+      .sidebar.right-side.hidden {
+        transform: translateX(100%);
       }
       /* Backdrop behind sidebar */
       #sidebar-backdrop {

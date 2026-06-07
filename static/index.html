@@ -222,25 +222,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content, viewport-fit=cover" />
 </head>
 <body>
-  <!-- Loading overlay — hides all flashing until app is ready -->
-  <div id="app-loader" style="position:fixed;inset:0;z-index:99999;background:var(--bg,#282c34);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;transition:opacity .2s">
-    <div id="loader-wave" style="color:var(--brand-color,var(--red,#e06c75));font-family:monospace;font-size:11px;opacity:.5">▁▂▃</div>
+  <!-- Loading overlay — minimal flash then immediate dismiss -->
+  <div id="app-loader" style="position:fixed;inset:0;z-index:99999;background:var(--bg,#282c34);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;transition:opacity .15s;pointer-events:none">
   </div>
   <script nonce="{{CSP_NONCE}}">
   (function(){
-    var el=document.getElementById('loader-wave');
-    if(!el)return;
-    var frames=['▁▂▃','▂▃▄','▃▄▅','▄▅▆','▅▆▅','▆▅▄','▅▄▃','▄▃▂','▃▂▁'];
-    var i=0;
-    var iv=setInterval(function(){
-      if(!document.getElementById('app-loader')){clearInterval(iv);return}
-      el.textContent=frames[i%frames.length];
-      i++;
-    },150);
-    // Make loader non-blocking after 400ms so clicks pass through to the UI
-    setTimeout(function(){var l=document.getElementById('app-loader');if(l){l.style.pointerEvents='none'}},400);
-    // Remove loader entirely after 800ms as a hard fallback
-    setTimeout(function(){var l=document.getElementById('app-loader');if(l){l.style.opacity='0';setTimeout(function(){l.remove()},200)}},800);
+    // Dismiss loader almost immediately — no animation needed
+    var l=document.getElementById('app-loader');
+    if(l){l.style.opacity='0';setTimeout(function(){l.remove()},150)}
   })();
   </script>
   <!-- Memory Management Modal -->

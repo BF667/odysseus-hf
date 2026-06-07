@@ -78,9 +78,9 @@ export function initSidebarLayout(Storage, opts) {
   _syncRailSideFn = _syncRailSideCore;
   window.syncRailSide = syncRailSide;
 
-  // Restore sidebar side preference — default to right side
+  // Restore sidebar side preference — default to left side
   const savedSide = Storage.get(Storage.KEYS.SIDEBAR_SIDE);
-  if (savedSide !== 'left') {
+  if (savedSide === 'right') {
     document.getElementById('sidebar').classList.add('right-side');
   }
   syncRailSide();
@@ -165,10 +165,11 @@ export function initSidebarLayout(Storage, opts) {
           sidebar.classList.add('hidden');
           if (backdrop) backdrop.classList.remove('visible');
         } else {
-          // Mobile: the hamburger always opens the sidebar from the RIGHT.
-          // (Not persisted — keeps the desktop side preference untouched.)
-          if (!sidebar.classList.contains('right-side')) {
-            sidebar.classList.add('right-side');
+          // Mobile: the hamburger opens the sidebar from the LEFT by default.
+          // If user saved a preference for right, respect that.
+          // Shift+click on hamburger toggles the side.
+          if (sidebar.classList.contains('right-side')) {
+            sidebar.classList.remove('right-side');
             if (documentModule && documentModule.swapSide) { try { documentModule.swapSide(); } catch (_) {} }
           }
           // Opening sidebar — blur keyboard first, then open after layout settles
