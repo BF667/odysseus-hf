@@ -1,0 +1,103 @@
+# Dockerfile.spaces — All-in-one Hugging Face Spaces deployment
+#
+# Multi-stage build: clones the Odysseus repo from GitHub, installs
+# everything in a builder stage, then copies only the result into a
+# slim final image. You do NOT need to push any code to your Space —
+# just push this single file.
+#
+# Usage (zero-push deploy):
+#   1. Create a new Docker Space on huggingface.co (empty repo)
+#   2. Set HF_TOKEN as a Space secret
+#   3. Set ODYSSEUS_AUTO_BUCKET=1 as a Space variable (recommended)
+#   4. Push ONLY this Dockerfile to the Space — nothing else needed
+#   5. That's it. The build clones the full app from GitHub.
+#
+# You can override which repo/branch to deploy with build args:
+#   ODSY_REPO   — git URL (default: https://github.com/BF667/odysseus-hf.git)
+#   ODSY_BRANCH — branch or tag (default: dev)
+
+# ── Build args: repo + branch to clone ──────────────────────────────────────
+ARG ODSY_REPO=https://github.com/BF667/odysseus-hf.git
+ARG ODSY_BRANCH=dev
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Stage 1: Builder — clone, install, setup
+# ═══════════════════════════════════════════════════════════════════════════
+FROM python:3.12-slim AS builder
+
+ARG ODSY_REPO
+ARG ODSY_BRANCH
+
+WORKDIR /app
+
+# Install git (needed for clone) and build tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    build-essential \
+    cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone repository
+RUN git clone --depth 1 --branch "${ODSY_BRANCH}" "${ODSY_REPO}" .
+
+# Create virtual environment
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir -r requirements-optional.txt \
+    && pip install --no-cache-dir \
+        huggingface_hub[hf_xet] \
+        xet
+
+# Run setup
+RUN python setup.py
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Stage 2: Final — slim runtime image
+# ═══════════════════════════════════════════════════════════════════════════
+FROM python:3.12-slim
+
+# Runtime system deps (no build tools — lighter image)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    tmux \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+
+# Copy application files from builder
+COPY --from=builder /app /app
+
+WORKDIR /app
+
+# Set environment variables
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1
+
+# Create data directories
+RUN mkdir -p data logs
+
+# HF Spaces runs on port 7860
+EXPOSE 7860
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:7860/api/health || exit 1
+
+# Environment defaults for HF Spaces
+ENV AUTH_ENABLED=false \
+    APP_BIND=0.0.0.0 \
+    APP_PORT=7860 \
+    CHROMADB_HOST=localhost \
+    CHROMADB_PORT=8100 \
+    SEARXNG_INSTANCE=http://localhost:8080 \
+    ODYSSEUS_HF_SPACES=1
+
+# Entrypoint that handles HF Spaces bootstrap
+RUN chmod +x /app/docker/entrypoint-spaces.sh
+
+ENTRYPOINT ["/app/docker/entrypoint-spaces.sh"]
+CMD ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
