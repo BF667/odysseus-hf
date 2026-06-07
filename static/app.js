@@ -1136,7 +1136,13 @@ function initializeEventListeners() {
       if (d.is_admin && userBarAdmin) userBarAdmin.style.display = '';
       const userBarName = el('user-bar-name');
       const userBarAvatar = el('user-bar-avatar');
-      if (userBarName && d.username) {
+      const userBarProfile = el('user-bar-profile');
+      const userBarActions = el('user-bar-actions');
+      const userBarLogout = el('user-bar-logout');
+      const userBarSignin = el('user-bar-signin');
+
+      if (d.username) {
+        // Logged in — show profile + actions, hide sign-in, show logout
         let displayName = d.username;
         // Mask email addresses
         if (displayName.includes('@')) {
@@ -1144,9 +1150,50 @@ function initializeEventListeners() {
           const ext = domain.includes('.') ? domain.slice(domain.lastIndexOf('.')) : '';
           displayName = local.charAt(0) + '•••@••••' + ext;
         }
-        userBarName.textContent = displayName;
+        if (userBarName) userBarName.textContent = displayName;
         if (userBarAvatar) userBarAvatar.textContent = d.username.charAt(0).toUpperCase();
+        if (userBarProfile) userBarProfile.style.display = '';
+        if (userBarActions) userBarActions.style.display = '';
+        if (userBarLogout) userBarLogout.style.display = '';
+        if (userBarSignin) userBarSignin.style.display = 'none';
+      } else {
+        // Not logged in — hide profile + actions, show sign-in
+        if (userBarProfile) userBarProfile.style.display = 'none';
+        if (userBarActions) userBarActions.style.display = 'none';
+        if (userBarLogout) userBarLogout.style.display = 'none';
+        if (userBarSignin) userBarSignin.style.display = '';
+        if (userBarName) userBarName.textContent = 'User';
+        if (userBarAvatar) userBarAvatar.textContent = '';
       }
+
+      // Sign In button → navigate to login
+      if (userBarSignin) {
+        userBarSignin.addEventListener('click', () => {
+          window.location.href = '/login';
+        });
+      }
+
+      // Log Out button → POST logout, wipe state, redirect
+      if (userBarLogout) {
+        userBarLogout.addEventListener('click', async () => {
+          try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (_) {}
+          // SECURITY: wipe all client-side state on logout so the next user that
+          // signs in on this browser doesn't inherit the previous account's data.
+          // Keep "odysseus-last-user" so the login form remembers the username.
+          try {
+            const _keepKeys = new Set(['odysseus-last-user']);
+            const _toRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              if (k && !_keepKeys.has(k)) _toRemove.push(k);
+            }
+            _toRemove.forEach(k => localStorage.removeItem(k));
+            sessionStorage.clear();
+          } catch (_) {}
+          window.location.href = '/login';
+        });
+      }
+
       // Apply per-user privilege restrictions
       if (d.privileges) {
         window._userPrivileges = d.privileges;

@@ -518,6 +518,39 @@ body.bg-pattern-sparkles {
       background: color-mix(in srgb, var(--fg) 8%, transparent);
     }
 
+    /* Log Out button — matches user-bar-btn style with a red hover */
+    .user-bar-logout-btn:hover {
+      opacity: 1;
+      background: color-mix(in srgb, var(--red) 14%, transparent);
+      color: var(--red);
+    }
+
+    /* Sign In button — shown when not authenticated */
+    .user-bar-signin-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 8px 16px;
+      border: 1px solid var(--accent, var(--red));
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--accent, var(--red)) 12%, transparent);
+      color: var(--accent, var(--red));
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s, transform 0.1s;
+      min-height: 36px;
+    }
+    .user-bar-signin-btn:hover {
+      background: color-mix(in srgb, var(--accent, var(--red)) 22%, transparent);
+      opacity: 0.9;
+    }
+    .user-bar-signin-btn:active {
+      transform: scale(0.97);
+    }
 
     .sidebar.hidden .sidebar-user-bar {
       display: none;
@@ -4066,7 +4099,7 @@ body.bg-pattern-sparkles {
         box-shadow: 4px 0 20px rgba(0,0,0,0.5);
         transition: transform 0.25s ease, opacity 0.25s ease !important;
         opacity: 1 !important;
-        overflow: visible !important;
+        overflow: hidden !important;
       }
       .sidebar.hidden {
         width: 80% !important;
@@ -4097,7 +4130,7 @@ body.bg-pattern-sparkles {
         -webkit-overflow-scrolling: touch;
         overscroll-behavior-y: auto;
         overflow-y: scroll !important;
-        padding-bottom: 40px;
+        padding-bottom: 60px !important;
       }
       .sidebar:not(.hidden) {
         overscroll-behavior: auto;
@@ -4115,6 +4148,29 @@ body.bg-pattern-sparkles {
       .sidebar-inner {
         padding: 12px 10px 12px !important;
         gap: 4px !important;
+        /* Make sure the user bar at bottom doesn't get cut off */
+        padding-bottom: 60px !important;
+      }
+      /* Sidebar user bar — visible and touch-friendly on mobile */
+      .sidebar-user-bar {
+        padding: 10px 12px !important;
+        min-height: 48px !important;
+        flex-shrink: 0;
+      }
+      .user-bar-btn {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px;
+      }
+      .user-bar-logout-btn {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px;
+      }
+      .user-bar-signin-btn {
+        min-height: 44px !important;
+        font-size: 13px !important;
+        padding: 10px 16px !important;
       }
       /* Section headers — match list item sizing */
       .section-header-flex {
