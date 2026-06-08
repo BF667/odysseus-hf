@@ -197,7 +197,7 @@ class AuthManager:
                 return False
             return self.create_user(username, password, is_admin=True)
 
-    def create_user(self, username: str, password: str, is_admin: bool = False) -> bool:
+    def create_user(self, username: str, password: str, is_admin: bool = False, oauth_provider: str = "") -> bool:
         """Create a new user account."""
         username = username.strip().lower()
         if not username:
@@ -210,15 +210,36 @@ class AuthManager:
                 return False
             if "users" not in self._config:
                 self._config["users"] = {}
-            self._config["users"][username] = {
+            user_record = {
                 "password_hash": _hash_password(password),
                 "created": time.time(),
                 "is_admin": is_admin,
                 "privileges": dict(ADMIN_PRIVILEGES if is_admin else DEFAULT_PRIVILEGES),
             }
+            if oauth_provider:
+                user_record["oauth_provider"] = oauth_provider
+            self._config["users"][username] = user_record
             self._save()
-        logger.info(f"Created user '{username}' (admin={is_admin})")
+        logger.info(f"Created user '{username}' (admin={is_admin}, oauth={oauth_provider or 'none'})")
         return True
+
+    def ensure_user(self, username: str, oauth_provider: str = "github") -> str:
+        """Return the normalised username, creating the account if it doesn't exist.
+
+        Used by OAuth login flows to auto-provision a local account tied to
+        the external identity.  The password is set to a random string (the
+        user never needs it — they always log in via OAuth).  Returns the
+        normalised username on success, or empty string on failure.
+        """
+        username = username.strip().lower()
+        if not username:
+            return ""
+        if username in self.users:
+            return username
+        random_pw = secrets.token_urlsafe(32)
+        if self.create_user(username, random_pw, is_admin=False, oauth_provider=oauth_provider):
+            return username
+        return ""
 
     def delete_user(self, username: str, requesting_user: str) -> bool:
         """Delete a user. Only admins can delete, and can't delete themselves.
@@ -447,6 +468,22 @@ class AuthManager:
         username = username.strip().lower()
         if not self.verify_password(username, password):
             return None
+        return self._create_session_token(username)
+
+    def create_session_for_user(self, username: str) -> Optional[str]:
+        """Create a session token for an existing user without password check.
+
+        Used by OAuth providers (GitHub) that have already verified identity
+        out-of-band. Returns None if the user does not exist.
+        """
+        username = username.strip().lower()
+        if username not in self.users:
+            return None
+        return self._create_session_token(username)
+
+    def _create_session_token(self, username: str) -> str:
+        """Internal: mint a session token for a known-valid user."""
+        username = username.strip().lower()
         token = secrets.token_hex(32)
         with self._sessions_lock:
             self._sessions[token] = {

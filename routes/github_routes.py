@@ -11,6 +11,7 @@ Provides REST endpoints for:
 """
 
 import os
+import asyncio
 import logging
 from typing import Optional, List
 from fastapi import APIRouter, Request, HTTPException
@@ -115,10 +116,14 @@ def setup_github_routes() -> APIRouter:
         """Handle the GitHub OAuth2 callback.
 
         GitHub redirects here after the user authorizes the app.
-        This endpoint exchanges the code for an access token.
+        This endpoint exchanges the code for an access token, fetches the
+        GitHub user info, auto-provisions a local Odysseus account, creates
+        a session, and sets the session cookie — so "Login with GitHub"
+        actually logs the user in.
         """
         gh = _get_github(request)
         redirect_uri = _build_redirect_uri(request)
+        auth_manager = getattr(request.app.state, "auth_manager", None)
 
         try:
             result = await gh.exchange_code(
@@ -126,21 +131,67 @@ def setup_github_routes() -> APIRouter:
                 state=state,
                 redirect_uri=redirect_uri,
             )
-            # Redirect back to settings page with success
-            return RedirectResponse(
-                url="/?github_auth=success",
-                status_code=302,
-            )
+
+            # Fetch GitHub user info to use as the local username
+            gh_user = None
+            username = ""
+            try:
+                gh_user = await gh.get_authenticated_user()
+                username = (gh_user.get("login") or "").strip().lower()
+            except Exception as e:
+                logger.warning(f"Failed to fetch GitHub user info after OAuth: {e}")
+
+            if not username:
+                return RedirectResponse(
+                    url="/login?github_auth=error&msg=no_user_info",
+                    status_code=302,
+                )
+
+            # Auto-provision local account if it doesn't exist
+            if auth_manager:
+                username = await asyncio.to_thread(auth_manager.ensure_user, username, "github")
+                if not username:
+                    return RedirectResponse(
+                        url="/login?github_auth=error&msg=account_creation_failed",
+                        status_code=302,
+                    )
+
+                # Create a session (passwordless — GitHub already authenticated them)
+                session_token = await asyncio.to_thread(auth_manager.create_session_for_user, username)
+                if not session_token:
+                    return RedirectResponse(
+                        url="/login?github_auth=error&msg=session_failed",
+                        status_code=302,
+                    )
+
+                # Build the redirect response with session cookie
+                response = RedirectResponse(url="/?github_auth=success", status_code=302)
+                cookie_kwargs = dict(
+                    key="odysseus_session",
+                    value=session_token,
+                    httponly=True,
+                    samesite="lax",
+                    secure=os.getenv("SECURE_COOKIES", "false").lower() == "true",
+                    path="/",
+                    max_age=60 * 60 * 24 * 7,  # 7 days
+                )
+                response.set_cookie(**cookie_kwargs)
+                logger.info(f"GitHub OAuth login successful for user '{username}'")
+                return response
+            else:
+                # No auth manager — just redirect (legacy behavior)
+                return RedirectResponse(url="/?github_auth=success", status_code=302)
+
         except ValueError as e:
             logger.warning(f"GitHub OAuth callback validation failed: {e}")
             return RedirectResponse(
-                url="/?github_auth=error&msg=invalid_state",
+                url="/login?github_auth=error&msg=invalid_state",
                 status_code=302,
             )
         except Exception as e:
             logger.error(f"GitHub OAuth callback failed: {e}")
             return RedirectResponse(
-                url=f"/?github_auth=error&msg={str(e)[:100]}",
+                url=f"/login?github_auth=error&msg={str(e)[:100]}",
                 status_code=302,
             )
 
@@ -155,8 +206,21 @@ def setup_github_routes() -> APIRouter:
 
     @router.get("/status")
     async def github_status(request: Request):
-        """Get the current GitHub integration status."""
-        gh = _get_github(request)
+        """Get the current GitHub integration status.
+
+        Safe to call unauthenticated — used by the login page to decide
+        whether to show the "Login with GitHub" button.
+        """
+        gh = getattr(request.app.state, "github_oauth", None)
+        if not gh:
+            # GitHubOAuth not initialized — report as unconfigured
+            return {
+                "configured": False,
+                "authenticated": False,
+                "has_client_id": False,
+                "user": None,
+                "settings": {},
+            }
         user_info = None
         if gh.is_authenticated:
             try:

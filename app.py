@@ -178,6 +178,8 @@ if AUTH_ENABLED:
         "/api/health",
         "/api/version",
         "/api/github/oauth/callback",
+        "/api/github/oauth/authorize",
+        "/api/github/status",
         "/login",
     }
     AUTH_EXEMPT_PREFIXES = ["/static"]
